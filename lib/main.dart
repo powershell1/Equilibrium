@@ -1,5 +1,6 @@
+import 'package:equilibrium/pages/PairingPage.dart';
 import 'package:flutter/material.dart';
-import 'pages/PairingPage.dart';
+import 'pages/DashboardPage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1BBB6E)),
         useMaterial3: true,
       ),
-      home: DebugPage(),
+      home: const DashboardPage(),
     );
   }
 }
