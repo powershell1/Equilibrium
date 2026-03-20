@@ -1,3 +1,4 @@
+import 'package:equilibrium/widgets/custom_nav_bar.dart';
 import 'package:equilibrium/pages/ZoneDetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,181 +27,170 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundLight,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Sticky Header & Usage Hero
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-              decoration: BoxDecoration(
-                color: backgroundLight.withValues(alpha: 0.85),
-                border: Border(
-                  bottom: BorderSide(
-                    color: primary.withValues(alpha: 0.1),
-                    width: 1,
-                  ),
-                ),
-              ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 100), // Add padding for navbar
               child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.eco, color: primary, size: 24),
-                      const SizedBox(width: 8),
-                      Text(
-                        "TODAY'S USAGE",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                          color: muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        "12.4",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: textMain,
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "kWh",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  // Sticky Header & Usage Hero
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
                     decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(999),
+                      color: backgroundLight.withValues(alpha: 0.85),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: primary.withValues(alpha: 0.1),
+                          width: 1,
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Column(
                       children: [
-                        const Icon(Icons.trending_down, color: primary, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          "14% below average today",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: primary,
-                            letterSpacing: 0.5,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.eco, color: primary, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              "TODAY'S USAGE",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
+                                color: muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              "12.4",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: textMain,
+                                height: 1.0,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "kWh",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.trending_down, color: primary, size: 16),
+                              const SizedBox(width: 8),
+                              Text(
+                                "14% below average today",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: primary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Main Content: HEMS Box List
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Active Zones",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: textMain,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                    builder: (context) => const PairingPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add, color: primary),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                hoverColor: primary.withValues(alpha: 0.1),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        
+                        // Box Card 1: Living Room
+                        _buildZoneCard(
+                          icon: Icons.chair_outlined,
+                          title: "Living Room",
+                          deviceCount: 3,
+                          wattage: 120,
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Box Card 2: Kitchen
+                        _buildZoneCard(
+                          icon: Icons.kitchen_outlined,
+                          title: "Kitchen",
+                          deviceCount: 5,
+                          wattage: 850,
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Box Card 3: Home Office
+                        _buildZoneCard(
+                          icon: Icons.computer_outlined,
+                          title: "Home Office",
+                          deviceCount: 4,
+                          wattage: 340,
+                        ),
+                        const SizedBox(height: 80), // Spacer for bottom nav
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
-            // Main Content: HEMS Box List
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Active Zones",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: textMain,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (context) => const PairingPage(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.add, color: primary),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          hoverColor: primary.withValues(alpha: 0.1),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Box Card 1: Living Room
-                  _buildZoneCard(
-                    icon: Icons.chair_outlined,
-                    title: "Living Room",
-                    deviceCount: 3,
-                    wattage: 120,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Box Card 2: Kitchen
-                  _buildZoneCard(
-                    icon: Icons.kitchen_outlined,
-                    title: "Kitchen",
-                    deviceCount: 5,
-                    wattage: 850,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Box Card 3: Home Office
-                  _buildZoneCard(
-                    icon: Icons.computer_outlined,
-                    title: "Home Office",
-                    deviceCount: 4,
-                    wattage: 340,
-                  ),
-                  const SizedBox(height: 80), // Spacer for bottom nav
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: surface,
-          border: Border(
-            top: BorderSide(
-              color: primary.withValues(alpha: 0.1),
-              width: 1,
-            ),
           ),
-        ),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavItem(0, "Home", Icons.home),
-              _buildNavItem(1, "Insights", Icons.insights),
-              _buildNavItem(2, "Settings", Icons.settings_outlined),
-            ],
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: CustomNavBar(selectedIndex: 0),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -351,4 +341,3 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
-

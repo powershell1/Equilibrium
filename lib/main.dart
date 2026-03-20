@@ -1,8 +1,13 @@
+import 'package:equilibrium/function/APIHandler.dart';
+import 'package:equilibrium/pages/DashboardPage.dart';
+import 'package:equilibrium/pages/LoginPage.dart';
 import 'package:equilibrium/pages/PairingPage.dart';
 import 'package:flutter/material.dart';
-import 'pages/DashboardPage.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Load the saved auth token when the app starts
+  await apiHandler.loadAuthToken();
   runApp(const MyApp());
 }
 
@@ -12,13 +17,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Equilibrium',
+      title: 'Green Sight',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1BBB6E)),
         useMaterial3: true,
       ),
-      home: const DashboardPage(),
+      // Navigate to LoginPage if no auth token, otherwise go to DashboardPage
+      home: apiHandler.authToken.isNotEmpty 
+        ? const DashboardPage() 
+        : const LoginPage(),
     );
   }
 }
