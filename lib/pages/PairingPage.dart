@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:equilibrium/function/APIHandler.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -178,7 +179,11 @@ class _PairingPageState extends State<PairingPage> {
     }
     try {
       // The device firmware expects "ssid,password" not JSON
-      final data = "$ssid,$password";
+      final userInfo = await apiHandler.getUserInfo();
+      if (!userInfo.success) {
+        throw Exception("Failed to retrieve user info");
+      }
+      final data = "$ssid,$password,${userInfo.userId}";
       await _targetCharacteristic!.write(utf8.encode(data));
       debugPrint("Sent credentials: $data");
     } catch (e) {
