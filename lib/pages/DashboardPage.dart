@@ -1,3 +1,4 @@
+import 'package:equilibrium/function/APIHandler.dart';
 import 'package:equilibrium/widgets/custom_nav_bar.dart';
 import 'package:equilibrium/pages/ZoneDetailPage.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,14 @@ class _DashboardPageState extends State<DashboardPage> {
   static const Color accent = Color(0xFF84A9C0);
 
   int _selectedIndex = 0;
+
+  // Watt response
+  Future<double> getTodayUsage() async {
+    MeasurementsResponse response = await apiHandler.getMeasurements(MeasurementFrequency.daily);
+    double deltaActivePower = response.measurements.first['activeEnergy'] - response.measurements.last['activeEnergy'];
+    return deltaActivePower / 1000; // Convert from Wh to kWh
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +80,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              "12.4",
+                              "0.0",
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 40,
                                 fontWeight: FontWeight.bold,
@@ -90,6 +99,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           ],
                         ),
+                        /*
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -114,6 +124,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             ],
                           ),
                         ),
+                        
+                         */
                       ],
                     ),
                   ),
@@ -157,26 +169,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         _buildZoneCard(
                           icon: Icons.chair_outlined,
                           title: "Living Room",
-                          deviceCount: 3,
+                          deviceCount: 1,
                           wattage: 120,
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Box Card 2: Kitchen
-                        _buildZoneCard(
-                          icon: Icons.kitchen_outlined,
-                          title: "Kitchen",
-                          deviceCount: 5,
-                          wattage: 850,
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Box Card 3: Home Office
-                        _buildZoneCard(
-                          icon: Icons.computer_outlined,
-                          title: "Home Office",
-                          deviceCount: 4,
-                          wattage: 340,
+                          isActive: true,
                         ),
                         const SizedBox(height: 80), // Spacer for bottom nav
                       ],
@@ -200,6 +195,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required String title,
     required int deviceCount,
     required int wattage,
+    required bool isActive,
   }) {
     return GestureDetector(
       onTap: () {
@@ -254,14 +250,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
-                          color: primary,
+                        decoration: BoxDecoration(
+                          color: isActive ? Color(0xFF1BBB6E) : Color(0xFF9CAFA4),
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "Active • $deviceCount Devices",
+                        "${isActive ? "Active" : "Offline"} • $deviceCount Devices",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -273,29 +269,30 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  wattage.toString(),
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: accent,
+            if (isActive)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    wattage.toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: accent,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  "W",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: muted,
+                  const SizedBox(width: 4),
+                  Text(
+                    "W",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: muted,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

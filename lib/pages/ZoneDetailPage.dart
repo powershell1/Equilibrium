@@ -21,10 +21,10 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
   static const Color slate100 = Color(0xFFF1F5F9); // Tailwind slate-100
 
   // Simulating state for the toggle buttons
-  bool isEspressoOn = true;
-  bool isFridgeOn = true;
-  bool isMicrowaveOn = false;
-  bool isBlenderOn = false;
+  bool isOutletOn = false;
+
+  int totalLoad = 0; // Simulated total load in watts
+  int maxLoad = 1800; // Simulated max load capacity in watts
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +61,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                   ),
                   Expanded(
                     child: Text(
-                      "${widget.zoneName} HEMS Box",
+                      "${widget.zoneName}",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 20,
@@ -118,7 +118,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: "850W",
+                                        text: "${totalLoad}W",
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold,
@@ -126,7 +126,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                                         ),
                                       ),
                                       TextSpan(
-                                        text: " / 1800W",
+                                        text: " / ${maxLoad}W",
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
@@ -157,7 +157,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                                 ),
                                 Container(
                                   height: 10,
-                                  width: constraints.maxWidth * 0.47,
+                                  width: constraints.maxWidth * totalLoad/maxLoad,
                                   decoration: BoxDecoration(
                                     color: primary,
                                     borderRadius: BorderRadius.circular(999),
@@ -171,7 +171,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "47% Capacity",
+                            "${(totalLoad/maxLoad * 100).floor()}% Capacity",
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -204,7 +204,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          "4 Active",
+                          "${isOutletOn ? 1 : 0} Active",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -228,67 +228,28 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                     children: [
                        _buildOutletCard(
                         icon: Icons.coffee_maker,
-                        name: "Espresso Machine",
-                        value: "450W",
-                        isOn: isEspressoOn,
-                        onToggle: () => setState(() => isEspressoOn = !isEspressoOn),
+                        name: "Coffee Maker",
+                        value: "0W",
+                        isOn: isOutletOn,
+                        deviceConnection: false,
+                        onToggle: () => setState(() => isOutletOn = !isOutletOn),
                         onCardTap: () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => OutletDetailPage(
-                                outletName: "Espresso Machine",
-                                currentWattage: "450W",
-                                initialStatus: isEspressoOn,
+                                outletName: "Coffee Maker",
+                                currentWattage: "0W",
+                                initialStatus: isOutletOn,
                               ),
                             ),
                           );
                           if (result != null && result is bool) {
                             setState(() {
-                              isEspressoOn = result;
+                              isOutletOn = result;
                             });
                           }
                         },
-                       ),
-                       _buildOutletCard(
-                        icon: Icons.kitchen, // Smart Fridge
-                        name: "Smart Fridge",
-                        value: "200W",
-                        isOn: isFridgeOn,
-                         onToggle: () => setState(() => isFridgeOn = !isFridgeOn),
-                         onCardTap: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OutletDetailPage(
-                                outletName: "Smart Fridge",
-                                currentWattage: "200W",
-                                initialStatus: isFridgeOn,
-                              ),
-                            ),
-                          );
-                          if (result != null && result is bool) {
-                            setState(() {
-                              isFridgeOn = result;
-                            });
-                          }
-                         },
-                       ),
-                       _buildOutletCard(
-                        icon: Icons.microwave,
-                        name: "Microwave",
-                        value: "Standby",
-                        isOn: isMicrowaveOn,
-                         onToggle: () => setState(() => isMicrowaveOn = !isMicrowaveOn),
-                         onCardTap: () {},
-                       ),
-                       _buildOutletCard(
-                        icon: Icons.blender,
-                        name: "Blender",
-                        value: "Off",
-                        isOn: isBlenderOn,
-                         onToggle: () => setState(() => isBlenderOn = !isBlenderOn),
-                         onCardTap: () {},
                        ),
                     ],
                   ),
@@ -306,6 +267,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
     required String name,
     required String value,
     required bool isOn,
+    required bool deviceConnection,
     required VoidCallback onToggle,
     required VoidCallback onCardTap,
   }) {
@@ -337,7 +299,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                  width: 8,
                  height: 8,
                  decoration: BoxDecoration(
-                   color: isOn ? primary : const Color(0xFFE2E8F0), // slate-200
+                   color: isOn && deviceConnection ? primary : const Color(0xFFE2E8F0), // slate-200
                    shape: BoxShape.circle,
                    boxShadow: isOn ? [
                       BoxShadow(
@@ -368,7 +330,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
               ),
             ),
           ),
-          
+
           Column(
             children: [
               Text(
@@ -377,7 +339,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isMicrowaveOn && name == "Microwave" ? slate900 : slate900, // Just using logic to match potential slight variants
+                  color: slate900, // Just using logic to match potential slight variants
                 ),
               ),
               const SizedBox(height: 2),

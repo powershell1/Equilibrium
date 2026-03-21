@@ -9,7 +9,7 @@ class APIResponse {
   final bool success;
   final String? message;
 
-  APIResponse(this.success, {this.message});
+  APIResponse({required this.success, this.message});
 }
 
 class UserInfoResponse extends APIResponse {
@@ -18,8 +18,54 @@ class UserInfoResponse extends APIResponse {
   final String email;
   final List<String> iotDevices;
 
-  UserInfoResponse(bool success, this.userId, this.username, this.email, this.iotDevices)
-      : super(success);
+  UserInfoResponse({
+    required bool success,
+    String? message,
+    this.userId = "",
+    this.username = "",
+    this.email = "",
+    this.iotDevices = const [],
+  }) : super(success: success, message: message);
+}
+
+class DeviceInfoResponse extends APIResponse {
+  final Map<String, dynamic> deviceInfo;
+
+  DeviceInfoResponse({
+    required bool success,
+    String? message,
+    this.deviceInfo = const {},
+  }) : super(success: success, message: message);
+}
+
+class IotStateResponse extends APIResponse {
+  final bool state;
+
+  IotStateResponse({
+    required bool success,
+    String? message,
+    this.state = false,
+  }) : super(success: success, message: message);
+}
+
+class MeasurementsResponse extends APIResponse {
+  final List<dynamic> measurements;
+
+  MeasurementsResponse({
+    required bool success,
+    String? message,
+    this.measurements = const [],
+  }) : super(success: success, message: message);
+}
+
+class LoginResponse extends APIResponse {
+  final String? token;
+
+  LoginResponse({
+    required bool success,
+    String? message,
+    this.token,
+  }) : super(success: success, message: message);
 }
 
 enum MeasurementFrequency {
@@ -59,94 +105,111 @@ class APIHandler {
     authToken = "";
   }
 
-  Future<Map<String, dynamic>> getDeviceInfo(String deviceId) async {
-    final url = Uri.parse("$API_URL/api/device-info?iotId=$deviceId");
-    final response = await http.get(url, headers: {
-      'Authorization': authToken,
-    });
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['success'] ? data['deviceInfo'] : {};
-    } else {
-      return {};
+  Future<Map<String, dynamic>> _get(String endpoint) async {
+    try {
+      final url = Uri.parse("$API_URL$endpoint");
+      final response = await http.get(url, headers: {
+        'Authorization': authToken,
+      }).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data is Map<String, dynamic> ? data : {'success': false, 'message': 'Invalid response type'};
+      } else {
+        return {'success': false, 'message': 'Server error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
-  Future<bool> getIotState(String deviceId) async {
-    final url = Uri.parse("$API_URL/api/iot-state?deviceId=$deviceId");
-    final response = await http.get(url, headers: {
-      'Authorization': authToken,
-    });
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (!data['success']) return false;
-      return data['state'] == "1";
-    } else {
-      return false;
+  Future<Map<String, dynamic>> _post(String endpoint, {Map<String, dynamic>? body}) async {
+    try {
+      final url = Uri.parse("$API_URL$endpoint");
+      final response = await http.post(url, headers: {
+        'Authorization': authToken,
+      }, body: body).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data is Map<String, dynamic> ? data : {'success': false, 'message': 'Invalid response type'};
+      } else {
+        return {'success': false, 'message': 'Server error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
-  Future<bool> setIotState(String deviceId, bool state) async {
-    final url = Uri.parse("$API_URL/api/iot-state");
-    final response = await http.post(url, headers: {
-      'Authorization': authToken,
-    }, body: {
+  Future<DeviceInfoResponse> getDeviceInfo(String deviceId) async {
+    final data = await _get("/api/device-info?iotId=$deviceId");
+    return DeviceInfoResponse(
+      success: data['success'] ?? false,
+      message: data['message'],
+      deviceInfo: (data['success'] == true) ? (data['deviceInfo'] ?? {}) : {},
+    );
+  }
+
+  Future<IotStateResponse> getIotState(String deviceId) async {
+    final data = await _get("/api/iot-state?deviceId=$deviceId");
+    return IotStateResponse(
+      success: data['success'] ?? false,
+      message: data['message'],
+      state: data['state'] == "1",
+    );
+  }
+
+  Future<APIResponse> setIotState(String deviceId, bool state) async {
+    final data = await _post("/api/iot-state", body: {
       'iotId': deviceId,
       'state': state ? "1" : "0",
     });
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['success'];
-    } else {
-      return false;
-    }
+    return APIResponse(
+      success: data['success'] ?? false,
+      message: data['message'],
+    );
   }
 
-  Future<Map<String, dynamic>> getMeasurements(MeasurementFrequency frequency) async {
-    final url = Uri.parse("$API_URL/api/measurements?frequency=${frequency.name}");
-    final response = await http.get(url, headers: {
-      'Authorization': authToken,
-    });
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['success'] ? data['measurements'] : {};
-    } else {
-      return {};
-    }
+  Future<MeasurementsResponse> getMeasurements(MeasurementFrequency frequency) async {
+    final data = await _get("/api/measurements?frequency=${frequency.name}");
+    return MeasurementsResponse(
+      success: data['success'] ?? false,
+      message: data['message'],
+      measurements: (data['success'] == true) ? (data['measurements'] ?? []) : [],
+    );
   }
 
-  Future<bool> login(String email, String password) async {
-    final url = Uri.parse("$API_URL/api/login");
-    final response = await http.post(url, body: {
+  Future<LoginResponse> login(String email, String password) async {
+    final data = await _post("/api/login", body: {
       'email': email,
       'password': password,
     });
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success']) {
-        final token = data['userAuth'];
-        await saveAuthToken(token);
-        return true;
-      }
-      return false;
-    } else {
-      return false;
+    if (data['success'] == true) {
+      final token = data['userAuth'];
+      await saveAuthToken(token);
+      return LoginResponse(
+        success: true,
+        message: data['message'],
+        token: token,
+      );
     }
+    return LoginResponse(success: false, message: data['message']);
   }
 
   Future<UserInfoResponse> getUserInfo() async {
-    final url = Uri.parse("$API_URL/api/user-info");
-    final response = await http.get(url, headers: {
-      'Authorization': authToken,
-    });
-    final data = jsonDecode(response.body);
-    return UserInfoResponse(
-      data['success'],
-      data['userInfo']['userId'] ?? "",
-      data['userInfo']['username'] ?? "",
-      data['userInfo']['email'] ?? "",
-      List<String>.from(data['userInfo']['iotDevices'] ?? []),
-    );
+    final data = await _get("/api/user-info");
+    if (data['success'] == true) {
+      final userInfo = data['userInfo'] ?? {};
+      return UserInfoResponse(
+        success: true,
+        message: data['message'],
+        userId: userInfo['userId'] ?? "",
+        username: userInfo['username'] ?? "",
+        email: userInfo['email'] ?? "",
+        iotDevices: List<String>.from(userInfo['iotDevices'] ?? []),
+      );
+    }
+    return UserInfoResponse(success: false, message: data['message']);
   }
 }
 

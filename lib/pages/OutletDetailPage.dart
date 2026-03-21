@@ -1,3 +1,5 @@
+import 'package:equilibrium/function/APIHandler.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -31,10 +33,43 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
   bool routine1 = true;
   bool routine2 = true;
 
+  bool deviceConnection = false;
+  
+  late List<FlSpot> usageSpots;
+  double totalUsageKwh = 0;
+
+  Future<void> getOutletMeasurements() async {
+    // Simulate API call delay
+    MeasurementsResponse response = await apiHandler.getMeasurements(MeasurementFrequency.daily);
+    if (response.success) {
+      double kwhTotal = 0;
+      response.measurements.last[""]
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     isOn = widget.initialStatus;
+    
+    usageSpots = const [
+      FlSpot(0, 40),
+      FlSpot(1, 35),
+      FlSpot(2, 60),
+      FlSpot(3, 75),
+      FlSpot(4, 55),
+      FlSpot(5, 80),
+      FlSpot(6, 65),
+      FlSpot(7, 40),
+      FlSpot(8, 30),
+      FlSpot(9, 45),
+    ];
+    
+    double totalWattHours = 0;
+    for (var spot in usageSpots) {
+      totalWattHours += spot.y * 2; // Each unit is approx 2 hours if 0=6am, 9=now(12am next day?)
+    }
+    totalUsageKwh = totalWattHours / 1000;
   }
 
   @override
@@ -157,7 +192,7 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          isOn ? "CURRENTLY ACTIVE" : "OFFLINE",
+                          deviceConnection ? (isOn ? "CURRENTLY ACTIVE" : "OFFLINE") : "WAITING CONNECTION",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -186,7 +221,7 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                               ),
                             ),
                             Text(
-                              "1.2 kWh Total",
+                              "${totalUsageKwh.toStringAsFixed(2)} kWh Total",
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -198,6 +233,7 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                         const SizedBox(height: 16),
                         Container(
                           height: 200,
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                           decoration: BoxDecoration(
                             color: surface,
                             borderRadius: BorderRadius.circular(16),
@@ -209,64 +245,95 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                               ),
                             ],
                           ),
-                          child: Stack(
-                            children: [
-                              // Grid Lines
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: List.generate(
-                                  5,
-                                  (index) => Container(
-                                    height: 1,
+                          child: LineChart(
+                            LineChartData(
+                              gridData: FlGridData(
+                                show: true,
+                                drawVerticalLine: false,
+                                horizontalInterval: 20,
+                                getDrawingHorizontalLine: (value) {
+                                  return FlLine(
                                     color: muted.withValues(alpha: 0.1),
-                                    margin: EdgeInsets.only(
-                                      top: index == 0 ? 20 : 0,
-                                      bottom: index == 4 ? 40 : 0,
-                                      left: 20,
-                                      right: 20,
+                                    strokeWidth: 1,
+                                  );
+                                },
+                              ),
+                              titlesData: FlTitlesData(
+                                show: true,
+                                rightTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                topTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 30,
+                                    interval: 3,
+                                    getTitlesWidget: (value, meta) {
+                                      String text = '';
+                                      switch (value.toInt()) {
+                                        case 0:
+                                          text = '6 AM';
+                                          break;
+                                        case 3:
+                                          text = '12 PM';
+                                          break;
+                                        case 6:
+                                          text = '6 PM';
+                                          break;
+                                        case 9:
+                                          text = 'Now';
+                                          break;
+                                      }
+                                      return SideTitleWidget(
+                                        meta: meta,
+                                        child: Text(
+                                          text,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: muted,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                leftTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                              ),
+                              borderData: FlBorderData(
+                                show: false,
+                              ),
+                              minX: 0,
+                              maxX: 9,
+                              minY: 0,
+                              maxY: 100,
+                              lineBarsData: [
+                                LineChartBarData(
+                                  spots: usageSpots,
+                                  isCurved: true,
+                                  color: accent,
+                                  barWidth: 3,
+                                  isStrokeCapRound: true,
+                                  dotData: const FlDotData(show: false),
+                                  belowBarData: BarAreaData(
+                                    show: true,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        accent.withValues(alpha: 0.3),
+                                        accent.withValues(alpha: 0.0),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ),
-                              // Chart Area
-                              Positioned(
-                                left: 20,
-                                right: 20,
-                                bottom: 40,
-                                top: 40,
-                                child: ClipPath(
-                                  clipper: ChartClipper(),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          accent.withValues(alpha: 0.2),
-                                          accent.withValues(alpha: 0.0),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Chart Line Border (Top of clip) - Approximated visually or just let the area be enough
-                              // X-Axis Labels
-                              Positioned(
-                                bottom: 12,
-                                left: 20,
-                                right: 20,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    _buildAxisLabel("6 AM"),
-                                    _buildAxisLabel("12 PM"),
-                                    _buildAxisLabel("6 PM"),
-                                    _buildAxisLabel("Now"),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -381,17 +448,6 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
     );
   }
 
-  Widget _buildAxisLabel(String text) {
-    return Text(
-      text,
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: muted,
-      ),
-    );
-  }
-
   Widget _buildRoutineItem({
     required IconData icon,
     required String title,
@@ -464,36 +520,4 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
     );
   }
 }
-
-class ChartClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height);
-    
-    // clip-path: polygon(0 40%, 10% 35%, 20% 45%, 30% 20%, 40% 25%, 50% 10%, 60% 30%, 70% 50%, 80% 40%, 90% 60%, 100% 50%, 100% 100%, 0 100%);
-    // Mapping percentages to width/height
-    // 0 40%
-    path.lineTo(0, size.height * 0.40);
-    path.lineTo(size.width * 0.10, size.height * 0.35);
-    path.lineTo(size.width * 0.20, size.height * 0.45);
-    path.lineTo(size.width * 0.30, size.height * 0.20);
-    path.lineTo(size.width * 0.40, size.height * 0.25);
-    path.lineTo(size.width * 0.50, size.height * 0.10);
-    path.lineTo(size.width * 0.60, size.height * 0.30);
-    path.lineTo(size.width * 0.70, size.height * 0.50);
-    path.lineTo(size.width * 0.80, size.height * 0.40);
-    path.lineTo(size.width * 0.90, size.height * 0.60);
-    path.lineTo(size.width * 1.00, size.height * 0.50);
-    
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
 

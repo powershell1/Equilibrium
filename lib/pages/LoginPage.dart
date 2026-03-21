@@ -328,10 +328,10 @@ class _LoginPageState extends State<LoginPage> {
                 final email = _emailController.text.trim();
                 final password = _passwordController.text.trim();
                 
-                bool success = await apiHandler.login(email, password);
+                LoginResponse response = await apiHandler.login(email, password);
                 
                 if (context.mounted) {
-                  if (success) {
+                  if (response.success) {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => const DashboardPage()),
                     );
