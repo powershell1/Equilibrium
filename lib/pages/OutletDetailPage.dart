@@ -37,44 +37,77 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
   
   late List<FlSpot> usageSpots;
   double totalUsageKwh = 0;
+  double maxY = 100;
 
   Future<void> getOutletMeasurements() async {
     // Simulate API call delay
     MeasurementsResponse response = await apiHandler.getMeasurements(MeasurementFrequency.daily);
     if (response.success) {
-      double kwhTotal = 0;
-      response.measurements.last[""]
+      //double kwhTotal = (response.measurements.last["activePower"] - response.measurements.first["activePower"])/1000;
+
+      /*
+      usageSpots = List.generate(response.measurements.length, (index) {
+        double watt = response.measurements[index]["activePower"].toDouble();
+        // print(response.measurements[index]);
+        return FlSpot(index.toDouble(), watt);
+      });
+
+       */
+      usageSpots = [
+        FlSpot(0, 0 * 1000),
+        FlSpot(7.00, 0 * 1000),
+        FlSpot(7.22, 0.34 * 1000),
+        FlSpot(7.44, 0.67 * 1000),
+        FlSpot(7.66, 0.98 * 1000),
+        FlSpot(7.88, 1.52 * 1000),
+        FlSpot(8.11, 1.6 * 1000),
+        FlSpot(8.33, 1.76 * 1000),
+        FlSpot(8.55, 1.89 * 1000),
+        FlSpot(8.77, 2.15 * 1000),
+        FlSpot(9.00, 2.3 * 1000),
+        FlSpot(24, 2.3 * 1000),
+
+      ];
+      double kwhTotal = usageSpots.last.y / 1000; // Convert from watt-hours to kWh
+      totalUsageKwh = kwhTotal;
+
+      double maxMsg = 0;
+      for (var spot in usageSpots) {
+        if (spot.y > maxMsg) {
+          maxMsg = spot.y;
+        }
+      }
+      maxY = maxMsg * 1.2;
+      if (maxY == 0) maxY = 100;
     }
+  }
+
+  void refresh() async {
+      await getOutletMeasurements();
+      setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
     isOn = widget.initialStatus;
-    
-    usageSpots = const [
-      FlSpot(0, 40),
-      FlSpot(1, 35),
-      FlSpot(2, 60),
-      FlSpot(3, 75),
-      FlSpot(4, 55),
-      FlSpot(5, 80),
-      FlSpot(6, 65),
-      FlSpot(7, 40),
-      FlSpot(8, 30),
-      FlSpot(9, 45),
-    ];
-    
-    double totalWattHours = 0;
-    for (var spot in usageSpots) {
-      totalWattHours += spot.y * 2; // Each unit is approx 2 hours if 0=6am, 9=now(12am next day?)
-    }
-    totalUsageKwh = totalWattHours / 1000;
+
+    usageSpots = [];
+    refresh();
+
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (didPop) {
+          return;
+        }
+        Navigator.pop(context, isOn);
+      },
+      child: Scaffold(
       backgroundColor: backgroundLight,
       body: SafeArea(
         child: Column(
@@ -250,7 +283,7 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                               gridData: FlGridData(
                                 show: true,
                                 drawVerticalLine: false,
-                                horizontalInterval: 20,
+                                horizontalInterval: maxY / 5,
                                 getDrawingHorizontalLine: (value) {
                                   return FlLine(
                                     color: muted.withValues(alpha: 0.1),
@@ -275,16 +308,31 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                                       String text = '';
                                       switch (value.toInt()) {
                                         case 0:
-                                          text = '6 AM';
+                                          text = '0 AM';
                                           break;
                                         case 3:
-                                          text = '12 PM';
+                                          text = '3 AM';
                                           break;
                                         case 6:
-                                          text = '6 PM';
+                                          text = '6 AM';
                                           break;
                                         case 9:
-                                          text = 'Now';
+                                          text = '9 AM';
+                                          break;
+                                        case 12:
+                                          text = '0 PM';
+                                          break;
+                                        case 15:
+                                          text = '3 PM';
+                                          break;
+                                        case 18:
+                                          text = '6 PM';
+                                          break;
+                                        case 21:
+                                          text = '9 PM';
+                                          break;
+                                        case 24:
+                                          text = '12 PM';
                                           break;
                                       }
                                       return SideTitleWidget(
@@ -309,13 +357,13 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
                                 show: false,
                               ),
                               minX: 0,
-                              maxX: 9,
+                              maxX: 24,
                               minY: 0,
-                              maxY: 100,
+                              maxY: maxY,
                               lineBarsData: [
                                 LineChartBarData(
                                   spots: usageSpots,
-                                  isCurved: true,
+                                  isCurved: false,
                                   color: accent,
                                   barWidth: 3,
                                   isStrokeCapRound: true,
@@ -429,6 +477,7 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
           ],
         ),
       ),
+    )
     );
   }
 
@@ -520,4 +569,10 @@ class _OutletDetailPageState extends State<OutletDetailPage> {
     );
   }
 }
+
+
+
+
+
+
 

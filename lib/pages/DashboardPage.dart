@@ -23,17 +23,38 @@ class _DashboardPageState extends State<DashboardPage> {
   static const Color accent = Color(0xFF84A9C0);
 
   int _selectedIndex = 0;
+  double todayUsage = 0.0;
+  
+  // Living Room State
+  bool _isLivingRoomOutletOn = false;
 
   // Watt response
   Future<double> getTodayUsage() async {
     MeasurementsResponse response = await apiHandler.getMeasurements(MeasurementFrequency.daily);
-    double deltaActivePower = response.measurements.first['activeEnergy'] - response.measurements.last['activeEnergy'];
+    int deltaActivePower = response.measurements.last['activeEnergy'] - response.measurements.first['activeEnergy'];
+    // print(deltaActivePower);
     return deltaActivePower / 1000; // Convert from Wh to kWh
   }
 
+  void refresh() async {
+    double usage = await getTodayUsage();
+    setState(() {
+      todayUsage = usage;
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (FakeGlobalVariable.connectedDevice) {
+      todayUsage = 2.30; // Simulated usage for demo purposes
+    }
     return Scaffold(
       backgroundColor: backgroundLight,
       body: Stack(
@@ -80,7 +101,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              "0.0",
+                              todayUsage.toStringAsFixed(2),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 40,
                                 fontWeight: FontWeight.bold,
@@ -147,13 +168,16 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                Navigator.push(
+                              onPressed: () async {
+                                await Navigator.push(
                                   context,
                                   MaterialPageRoute<void>(
                                     builder: (context) => const PairingPage(),
                                   ),
                                 );
+                                if (mounted) {
+                                  setState(() {});
+                                }
                               },
                               icon: const Icon(Icons.add, color: primary),
                               style: IconButton.styleFrom(
@@ -166,13 +190,31 @@ class _DashboardPageState extends State<DashboardPage> {
                         const SizedBox(height: 8),
                         
                         // Box Card 1: Living Room
-                        _buildZoneCard(
-                          icon: Icons.chair_outlined,
-                          title: "Living Room",
-                          deviceCount: 1,
-                          wattage: 120,
-                          isActive: true,
-                        ),
+                        if (FakeGlobalVariable.connectedDevice)
+                          _buildZoneCard(
+                            icon: Icons.chair_outlined,
+                            title: "Living Room",
+                            deviceCount: 1,
+                            wattage: _isLivingRoomOutletOn ? 750 : 0,
+                            isActive: _isLivingRoomOutletOn,
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ZoneDetailPage(
+                                    zoneName: "Living Room",
+                                    isOutletOn: _isLivingRoomOutletOn,
+                                  ),
+                                ),
+                              );
+                              
+                              if (result != null && result is bool) {
+                                setState(() {
+                                  _isLivingRoomOutletOn = result;
+                                });
+                              }
+                            }
+                          ),
                         const SizedBox(height: 80), // Spacer for bottom nav
                       ],
                     ),
@@ -196,16 +238,10 @@ class _DashboardPageState extends State<DashboardPage> {
     required int deviceCount,
     required int wattage,
     required bool isActive,
+    VoidCallback? onTap,
   }) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ZoneDetailPage(zoneName: title),
-          ),
-        );
-      },
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -299,42 +335,4 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildNavItem(int index, String label, IconData icon) {
-    bool isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 56,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isSelected ? primary.withValues(alpha: 0.1) : Colors.transparent,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Icon(
-              icon,
-              color: isSelected ? primary : muted,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? primary : muted,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

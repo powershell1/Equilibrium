@@ -129,6 +129,7 @@ class _PairingPageState extends State<PairingPage> {
                 if (value[0] == 49) {
                   if (mounted) {
                     setState(() {
+                      FakeGlobalVariable.connectedDevice = true;
                       _pairingStep = PairingStep.connected;
                     });
                   }

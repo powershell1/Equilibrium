@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../pages/DashboardPage.dart';
 import '../pages/SettingPage.dart';
+import '../pages/InsightPage.dart';
+import '../pages/NotificationPage.dart';
 
 class CustomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -41,8 +43,8 @@ class CustomNavBar extends StatelessWidget {
             onTap: () => _navigateTo(context, 1),
           ),
           _NavBarItem(
-            icon: Icons.energy_savings_leaf_outlined,
-            label: 'Routines',
+            icon: Icons.notifications_outlined,
+            label: 'Alerts',
             isActive: selectedIndex == 2,
             onTap: () => _navigateTo(context, 2),
           ),
@@ -66,12 +68,10 @@ class CustomNavBar extends StatelessWidget {
         page = const DashboardPage();
         break;
       case 1:
-        // Placeholder for Insights
-        page = const DashboardPage(); // navigate to dashboard for now
+        page = const InsightPage();
         break;
       case 2:
-        // Placeholder for Routines
-        page = const DashboardPage(); // navigate to dashboard for now
+        page = const NotificationPage();
         break;
       case 3:
         page = const SettingPage();

@@ -214,3 +214,7 @@ class APIHandler {
 }
 
 final APIHandler apiHandler = APIHandler();
+
+class FakeGlobalVariable {
+  static bool connectedDevice = false;
+}
